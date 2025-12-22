@@ -811,37 +811,7 @@ ${isDraggingFile ? 'border-indigo-500 bg-indigo-50/50 scale-[0.99]' : 'border-zi
                                         </div>
                                     )}
 
-                                    {/* PILLS ROW (Floating above bottom nav) */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-auto flex justify-center pb-24 bg-gradient-to-t from-white/90 via-white/50 to-transparent pointer-events-none">
-                                        <div className="flex items-center gap-2 bg-white rounded-full shadow-lg border border-zinc-200 p-1.5 pointer-events-auto ring-1 ring-black/5">
-                                            <button
-                                                onClick={() => setActiveMobileTool(activeMobileTool === 'import' ? null : 'import')}
-                                                className={`p-3 rounded-full transition-all ${activeMobileTool === 'import' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100 font-medium'}`}
-                                            >
-                                                <Upload className="w-5 h-5" />
-                                            </button>
-                                            <div className="w-px h-6 bg-zinc-200 mx-1"></div>
-                                            <button
-                                                onClick={() => {
-                                                    if (activeMobileTool === 'adjust') {
-                                                        setActiveMobileTool(null);
-                                                    } else {
-                                                        setActiveMobileTool('adjust');
-                                                        setMobileAdjustMode(selectedImage ? 'individual' : 'global');
-                                                    }
-                                                }}
-                                                className={`p-3 rounded-full transition-all ${activeMobileTool === 'adjust' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100 font-medium'}`}
-                                            >
-                                                <Scaling className="w-5 h-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setActiveMobileTool(activeMobileTool === 'layout' ? null : 'layout')}
-                                                className={`p-3 rounded-full transition-all ${activeMobileTool === 'layout' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100 font-medium'}`}
-                                            >
-                                                <Settings className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                    </div>
+                                    {/* PILLS ROW REPLACED BY BOTTOM NAV */}
                                 </div>
                             )}
                         </>
@@ -1054,16 +1024,36 @@ ${isDraggingFile ? 'border-indigo-500 bg-indigo-50/50 scale-[0.99]' : 'border-zi
             </main>
 
             {/* --- MOBILE NAVIGATION --- */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 z-50 flex justify-around items-end p-3 pb-safe no-print safe-area-bottom shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 z-50 grid grid-cols-5 items-end p-2 pb-safe no-print safe-area-bottom shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
+                {/* 1. Upload */}
                 <button
-                    onClick={() => toggleMobileTab('settings')}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 flex-1 ${activeTab === 'settings' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                    onClick={() => {
+                        setActiveTab('settings');
+                        setShowMobilePanel(true);
+                        setActiveMobileTool('import');
+                    }}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 ${activeMobileTool === 'import' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
                 >
-                    <Settings className={`w-6 h-6 transition-transform duration-300 ${activeTab === 'settings' && showMobilePanel ? 'fill-indigo-100 scale-110' : ''}`} />
-                    <span className="text-[10px] font-medium">Settings</span>
+                    <Upload className="w-5 h-5" />
+                    <span className="text-[9px] font-medium">Upload</span>
                 </button>
 
-                <div className="relative -top-6">
+                {/* 2. Resize / Adjust */}
+                <button
+                    onClick={() => {
+                        setActiveTab('settings');
+                        setShowMobilePanel(true);
+                        setActiveMobileTool('adjust');
+                        setMobileAdjustMode(selectedImage ? 'individual' : 'global');
+                    }}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 ${activeMobileTool === 'adjust' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                >
+                    <Scaling className="w-5 h-5" />
+                    <span className="text-[9px] font-medium">Adjust</span>
+                </button>
+
+                {/* 3. Print (Center) */}
+                <div className="relative -top-6 flex justify-center">
                     <button
                         onClick={handlePrint}
                         disabled={images.length === 0}
@@ -1074,19 +1064,37 @@ ${isDraggingFile ? 'border-indigo-500 bg-indigo-50/50 scale-[0.99]' : 'border-zi
                     <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium text-zinc-500 whitespace-nowrap">Print</span>
                 </div>
 
+                {/* 4. Layout */}
                 <button
-                    onClick={() => toggleMobileTab('sequence')}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 flex-1 ${activeTab === 'sequence' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                    onClick={() => {
+                        setActiveTab('settings');
+                        setShowMobilePanel(true);
+                        setActiveMobileTool('layout');
+                    }}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 ${activeMobileTool === 'layout' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                >
+                    <Settings className="w-5 h-5" />
+                    <span className="text-[9px] font-medium">Layout</span>
+                </button>
+
+                {/* 5. Images */}
+                <button
+                    onClick={() => {
+                        setActiveTab('sequence');
+                        setShowMobilePanel(true);
+                        setActiveMobileTool(null); // Clear specific tool when viewing list
+                    }}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 ${activeTab === 'sequence' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
                 >
                     <div className="relative">
-                        <List className={`w-6 h-6 transition-transform duration-300 ${activeTab === 'sequence' && showMobilePanel ? 'fill-indigo-100 scale-110' : ''}`} />
+                        <List className={`w-5 h-5 transition-transform duration-300 ${activeTab === 'sequence' && showMobilePanel ? 'fill-indigo-100 scale-110' : ''}`} />
                         {images.length > 0 && (
-                            <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center border-2 border-white">
+                            <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full min-w-[14px] text-center border-2 border-white">
                                 {images.length}
                             </span>
                         )}
                     </div>
-                    <span className="text-[10px] font-medium">Images</span>
+                    <span className="text-[9px] font-medium">Images</span>
                 </button>
             </nav>
 
