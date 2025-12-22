@@ -15,8 +15,7 @@ import {
     Scaling,
     List,
     GripVertical,
-    MousePointer2,
-    X
+    MousePointer2
 } from 'lucide-react';
 
 /**
@@ -179,9 +178,6 @@ export default function PrintNest() {
 
     // Scaling Logic
     const [useUniformSize, setUseUniformSize] = useState(true);
-    const [mobileAdjustMode, setMobileAdjustMode] = useState<'individual' | 'global' | 'spacing'>('global');
-
-    const [activeMobileTool, setActiveMobileTool] = useState<'import' | 'adjust' | 'layout' | null>(null);
 
     // Derived State for Rendering
     const activePaper = PAPER_SIZES[paperSize];
@@ -426,349 +422,21 @@ export default function PrintNest() {
         setPackedPages(pages);
     };
 
-    const currentPaper = PAPER_SIZES[paperSize];
-    const selectedImage = images.find(i => i.id === selectedImageId);
-
-    const renderMobileSelectedImageEditor = selectedImage ? (
-        <div className="flex items-center gap-3">
-            <div className="flex-1">
-                <input
-                    type="range"
-                    min="10"
-                    max="200"
-                    step="5"
-                    value={selectedImage.scale * 100}
-                    onChange={(e) => updateImageScale(selectedImage.id, Number(e.target.value) / 100)}
-                    className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
-                />
-            </div>
-            <span className="text-xs font-bold text-indigo-600 min-w-[3ch]">{(selectedImage.scale * 100).toFixed(0)}%</span>
-            <button
-                onClick={(e) => removeImage(selectedImage.id, e)}
-                className="p-2 text-rose-600 bg-rose-50 border border-rose-100 rounded-lg active:scale-95 transition-all"
-            >
-                <Trash2 className="w-4 h-4" />
-            </button>
-        </div>
-    ) : null;
-
     const handlePrint = () => {
         // Timeout helps ensure any recent React renders (like removing selection UI) are done
         setTimeout(() => window.print(), 100);
     };
 
-    // --- RENDER HELPERS (Extracted for Mobile Pills) ---
-
-    const renderImport = (
-        <div className="space-y-3">
-            <div
-                className={`group border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 cursor-pointer relative overflow-hidden
-${isDraggingFile ? 'border-indigo-500 bg-indigo-50/50 scale-[0.99]' : 'border-zinc-200 hover:border-indigo-400 hover:bg-zinc-50'}`}
-                onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
-                onDragLeave={() => setIsDraggingFile(false)}
-                onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDraggingFile(false);
-                    handleFileUpload(e.dataTransfer.files);
-                }}
-            >
-                <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    id="file-upload"
-                    onChange={(e) => handleFileUpload(e.target.files)}
-                />
-                <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center relative z-10">
-                    <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">  
-                        <Upload className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-semibold text-zinc-700">Click to upload</span>
-                    <span className="text-xs text-zinc-400 mt-1">or drag and drop images</span>
-                </label>
-            </div>
-        </div>
-    );
-
-    const renderSelectedImageEditor = selectedImage ? (
-        <div className="bg-white border border-indigo-100 p-4 rounded-2xl shadow-sm space-y-4 ring-4 ring-indigo-50/50 animate-in slide-in-from-top-4 fade-in duration-300">
-            <div className="flex justify-between items-start">
-                <h3 className="text-xs font-bold uppercase text-indigo-500 tracking-wider flex items-center gap-1.5">
-                    <MousePointer2 className="w-3 h-3" /> Selected Image
-                </h3>
-                <button onClick={() => setSelectedImageId(null)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
-                    <span className="sr-only">Close</span>
-                    <div className="bg-zinc-100 hover:bg-zinc-200 rounded-full p-1">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6
- 6l12 12" /></svg>
-                    </div>
-                </button>
-            </div>
-
-            <div className="flex items-center gap-3 bg-zinc-50 p-2 rounded-xl border border-zinc-100">
-                <img src={selectedImage.src} className="w-12 h-12 object-cover rounded-lg bg-white shadow-sm border border-zinc-200" />
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate text-zinc-700">{selectedImage.name}</p>
-                    <p className="text-[10px] text-zinc-500 font-medium font-mono">{(selectedImage.width * selectedImage.scale).toFixed(0)} x {(selectedImage.height * selectedImage.scal
-e).toFixed(0)} mm</p>
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <div className="flex justify-between">
-                    <label className="text-xs font-medium text-zinc-500">Scale</label>
-                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{(selectedImage.scale * 100).toFixed(0)}%</span>
-                </div>
-                <input
-                    type="range"
-                    min="10"
-                    max="200"
-                    step="5"
-                    value={selectedImage.scale * 100}
-                    onChange={(e) => updateImageScale(selectedImage.id, Number(e.target.value) / 100)}
-                    className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
-                />
-            </div>
-
-            <button
-                onClick={(e) => removeImage(selectedImage.id, e)}
-                className="w-full py-2 flex items-center justify-center gap-2 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 hover:border-rose-2
-00 rounded-lg transition-colors"
-            >
-                <Trash2 className="w-3.5 h-3.5" /> Remove Image
-            </button>
-        </div>
-    ) : null;
-
-    const renderGlobalSizing = (
-        <div className="space-y-4">
-            <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                <Scaling className="w-3 h-3" /> Global Sizing
-            </h2>
-            <div className="bg-zinc-50/50 p-4 rounded-xl border border-zinc-100 space-y-4">
-                <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-zinc-700">Uniform Size</label>
-                    <button
-                        onClick={() => setUseUniformSize(!useUniformSize)}
-                        className={`w-10 h-6 rounded-full transition-colors relative ${useUniformSize ? 'bg-indigo-600' : 'bg-zinc-200'}`}
-                    >
-                        <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${useUniformSize ? 'translate-x-4' : ''}`} />
-                    </button>
-                </div>
-
-                {useUniformSize ? (
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <label className="text-xs text-zinc-500">Max Length</label>
-                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{targetSize} mm</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="20"
-                            max="280"
-                            value={targetSize}
-                            onChange={(e) => setTargetSize(Number(e.target.value))}
-                            className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
-                        />
-                    </div>
-                ) : (
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <label className="text-xs text-zinc-500">Scale</label>
-                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{globalScale}%</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="10"
-                            max="200"
-                            value={globalScale}
-                            onChange={(e) => setGlobalScale(Number(e.target.value))}
-                            className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
-                        />
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-
-    const renderMobileAdjustments = (
-        <div className="space-y-4">
-            {/* Tabs */}
-            <div className="flex p-1 bg-zinc-100 rounded-lg">
-                <button
-                    disabled={!selectedImage}
-                    onClick={() => setMobileAdjustMode('individual')}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${mobileAdjustMode === 'individual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-500 h
-over:text-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed'}`}
-                >
-                    Single
-                </button>
-                <button
-                    onClick={() => setMobileAdjustMode('global')}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${mobileAdjustMode === 'global' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-500 hover
-:text-zinc-700'}`}
-                >
-                    All
-                </button>
-                <button
-                    onClick={() => setMobileAdjustMode('spacing')}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${mobileAdjustMode === 'spacing' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-500 hove
-r:text-zinc-700'}`}
-                >
-                    Space
-                </button>
-            </div>
-
-            {/* Content */}
-            <div className="mt-4">
-                {mobileAdjustMode === 'individual' && (
-                    selectedImage ? renderMobileSelectedImageEditor : <div className="text-center py-4 text-zinc-400 text-xs italic">Select an image to adjust it specially.</div>       
-                )}
-
-                {mobileAdjustMode === 'global' && renderGlobalSizing}
-
-                {mobileAdjustMode === 'spacing' && (
-                    <div className="space-y-6 animate-in fade-in duration-300">
-                        {/* Margin */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <label className="text-xs font-medium text-zinc-600">Margin</label>
-                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{margin} mm</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="0"
-                                max="50"
-                                step="1"
-                                value={margin}
-                                onChange={(e) => setMargin(Number(e.target.value))}
-                                className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
-                            />
-                        </div>
-
-                        {/* Gap */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <label className="text-xs font-medium text-zinc-600">Gap</label>
-                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{gap} mm</span>
-                            </div>
-                            <input
-                                type="range"
-                                min="0"
-                                max="20"
-                                step="1"
-                                value={gap}
-                                onChange={(e) => setGap(Number(e.target.value))}
-                                className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
-                            />
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-
-    const renderLayoutSettings = (
-        <div className="space-y-4">
-            <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                <Settings className="w-3 h-3" /> Paper & Layout
-            </h2>
-
-            <div className="space-y-3">
-                <div>
-                    <label className="text-xs font-medium text-zinc-600 mb-1.5 block">Paper Size</label>
-                    <div className="relative">
-                        <select
-                            value={paperSize}
-                            onChange={(e) => setPaperSize(e.target.value as keyof typeof PAPER_SIZES)}
-                            className="w-full text-sm border-zinc-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 pl-3 pr-8 bg-white appearance-
-none cursor-pointer"
-                        >
-                            {Object.entries(PAPER_SIZES).map(([key, config]) => (
-                                <option key={key} value={key}>{config.label}</option>
-                            ))}
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
-                            <List className="w-4 h-4" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs font-medium text-zinc-600 mb-1.5 block">Margin (mm)</label>
-                        <input
-                            type="number"
-                            value={margin}
-                            onChange={(e) => setMargin(Number(e.target.value))}
-                            className="w-full text-sm border-zinc-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 px-3"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-zinc-600 mb-1.5 block">Gap (mm)</label>
-                        <input
-                            type="number"
-                            value={gap}
-                            onChange={(e) => setGap(Number(e.target.value))}
-                            className="w-full text-sm border-zinc-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 px-3"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-zinc-50/50 rounded-xl border border-zinc-100">
-                    <div className="flex items-center gap-2">
-                        <RotateCw className="w-4 h-4 text-zinc-400" />
-                        <span className="text-xs font-medium text-zinc-600">Auto Rotate</span>
-                    </div>
-                    <button
-                        onClick={() => setAllowRotation(!allowRotation)}
-                        className={`w-10 h-6 rounded-full transition-colors relative ${allowRotation ? 'bg-indigo-600' : 'bg-zinc-200'}`}
-                    >
-                        <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${allowRotation ? 'translate-x-4' : ''}`} />
-                    </button>
-                </div>
-
-                <div className="space-y-2">
-                    <span className="text-xs font-medium text-zinc-600 block">Packing Logic</span>
-                    <div className="flex p-1 bg-zinc-100/80 rounded-lg">
-                        <button
-                            onClick={() => setSortStrategy('smart')}
-                            className={`flex-1 py-1.5 text-[10px] font-semibold rounded-md transition-all ${sortStrategy === 'smart' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-
-500 hover:text-zinc-700'}`}
-                        >
-                            Smart Check
-                        </button>
-                        <button
-                            onClick={() => setSortStrategy('manual')}
-                            className={`flex-1 py-1.5 text-[10px] font-semibold rounded-md transition-all ${sortStrategy === 'manual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc
--500 hover:text-zinc-700'}`}
-                        >
-                            Manual
-                        </button>
-                    </div>
-                    {sortStrategy === 'manual' && (
-                        <p className="text-[10px] text-amber-600 flex items-center gap-1.5 bg-amber-50/50 p-2 rounded-lg border border-amber-100/50">
-                            <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                            Drag images in "Images" tab to order.
-                        </p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-
-
+    const currentPaper = PAPER_SIZES[paperSize];
+    const selectedImage = images.find(i => i.id === selectedImageId);
 
     return (
         <div className="flex h-screen bg-zinc-50 text-zinc-900 font-sans overflow-hidden app-container selection:bg-indigo-100 selection:text-indigo-900">
 
             {/* --- SIDEBAR --- */}
             {/* --- SIDEBAR --- */}
-            <aside className={`${showMobilePanel ? (activeTab === 'settings' ? 'flex fixed inset-0 z-40 bg-transparent pointer-events-none' : 'flex fixed bottom-[88px] left-2 right-2 to
-p-auto h-[60vh] rounded-2xl border border-zinc-200/50 ring-1 ring-zinc-900/5 bg-white shadow-2xl') : 'hidden'} md:flex md:static md:w-96 md:h-auto md:inset-auto md:rounded-none md:borde
-r-r md:border-zinc-100 md:ring-0 bg-white flex-col z-40 shadow-2xl md:shadow-xl no-print transition-all duration-300 ease-in-out origin-bottom`}>
-                <div className="p-6 pb-2 bg-white z-10 hidden md:block">
+            <aside className={`${showMobilePanel ? 'flex fixed bottom-[88px] left-2 right-2 top-auto h-[60vh] rounded-2xl border border-zinc-200/50 ring-1 ring-zinc-900/5' : 'hidden'} md:flex md:static md:w-96 md:h-auto md:inset-auto md:rounded-none md:border-r md:border-zinc-100 md:ring-0 bg-white flex-col z-40 shadow-2xl md:shadow-xl no-print transition-all duration-300 ease-in-out origin-bottom`}>
+                <div className="p-6 pb-2 bg-white z-10">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="bg-indigo-600 rounded-lg p-1.5 shadow-lg shadow-indigo-200">
                             <Layout className="w-5 h-5 text-white" />
@@ -780,15 +448,13 @@ r-r md:border-zinc-100 md:ring-0 bg-white flex-col z-40 shadow-2xl md:shadow-xl 
                     <div className="hidden md:flex p-1 bg-zinc-100/80 rounded-xl mb-2 relative">
                         <button
                             onClick={() => setActiveTab('settings')}
-                            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${activeTab === 'settings' ? 'bg-white text-indigo-600 shadow-sm' : 'tex
-t-zinc-500 hover:text-zinc-700'}`}
+                            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${activeTab === 'settings' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
                         >
                             Settings
                         </button>
                         <button
                             onClick={() => setActiveTab('sequence')}
-                            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${activeTab === 'sequence' ? 'bg-white text-indigo-600 shadow-sm' : 'tex
-t-zinc-500 hover:text-zinc-700'}`}
+                            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${activeTab === 'sequence' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
                         >
                             Images ({images.length})
                         </button>
@@ -800,68 +466,219 @@ t-zinc-500 hover:text-zinc-700'}`}
                     {/* TAB: SETTINGS */}
                     {activeTab === 'settings' && (
                         <>
-                            {/* DESKTOP VIEW: Show Full List */}
-                            <div className="hidden md:block space-y-8">
-                                {renderImport}
-                                {renderSelectedImageEditor}
-                                {renderGlobalSizing}
-                                {renderLayoutSettings}
+                            {/* Import */}
+                            <div className="space-y-3">
+                                <div
+                                    className={`group border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 cursor-pointer relative overflow-hidden
+                    ${isDraggingFile ? 'border-indigo-500 bg-indigo-50/50 scale-[0.99]' : 'border-zinc-200 hover:border-indigo-400 hover:bg-zinc-50'}`}
+                                    onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
+                                    onDragLeave={() => setIsDraggingFile(false)}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        setIsDraggingFile(false);
+                                        handleFileUpload(e.dataTransfer.files);
+                                    }}
+                                >
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        className="hidden"
+                                        id="file-upload"
+                                        onChange={(e) => handleFileUpload(e.target.files)}
+                                    />
+                                    <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center relative z-10">
+                                        <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                                            <Upload className="w-5 h-5" />
+                                        </div>
+                                        <span className="text-sm font-semibold text-zinc-700">Click to upload</span>
+                                        <span className="text-xs text-zinc-400 mt-1">or drag and drop images</span>
+                                    </label>
+                                </div>
                             </div>
 
-                            {/* MOBILE VIEW: Floating Pills & Active Card */}
-                            {showMobilePanel && (
-                                <div className="md:hidden contents">
-                                    {/* ACTIVE TOOL CARD (Floating) */}
-                                    {activeMobileTool && (
-                                        <div className="fixed bottom-24 left-4 right-4 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-zinc-200/50 p-4 animate-in slide
--in-from-bottom-10 fade-in duration-300 z-50 pointer-events-auto ring-1 ring-black/5">
-
-                                            {/* Minimal Content - No Headers */}
-                                            <div className="max-h-[50vh] overflow-y-auto">
-                                                {activeMobileTool === 'import' && renderImport}
-                                                {activeMobileTool === 'adjust' && renderMobileAdjustments}
-                                                {activeMobileTool === 'layout' && renderLayoutSettings}
+                            {/* Selected Image Editor */}
+                            {selectedImage && (
+                                <div className="bg-white border border-indigo-100 p-4 rounded-2xl shadow-sm space-y-4 ring-4 ring-indigo-50/50 animate-in slide-in-from-top-4 fade-in duration-300">
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="text-xs font-bold uppercase text-indigo-500 tracking-wider flex items-center gap-1.5">
+                                            <MousePointer2 className="w-3 h-3" /> Selected Image
+                                        </h3>
+                                        <button onClick={() => setSelectedImageId(null)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+                                            <span className="sr-only">Close</span>
+                                            <div className="bg-zinc-100 hover:bg-zinc-200 rounded-full p-1">
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                             </div>
-                                        </div>
-                                    )}
+                                        </button>
+                                    </div>
 
-                                    {/* PILLS ROW (Floating above bottom nav) */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-auto flex justify-center pb-24 bg-gradient-to-t from-white/90 via-white/50 to-tra
-nsparent pointer-events-none">
-                                        <div className="flex items-center gap-2 bg-white rounded-full shadow-lg border border-zinc-200 p-1.5 pointer-events-auto ring-1 ring-black/5">   
-                                            <button
-                                                onClick={() => setActiveMobileTool(activeMobileTool === 'import' ? null : 'import')}
-                                                className={`p-3 rounded-full transition-all ${activeMobileTool === 'import' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover
-:bg-zinc-100 font-medium'}`}
-                                            >
-                                                <Upload className="w-5 h-5" />
-                                            </button>
-                                            <div className="w-px h-6 bg-zinc-200 mx-1"></div>
-                                            <button
-                                                onClick={() => {
-                                                    if (activeMobileTool === 'adjust') {
-                                                        setActiveMobileTool(null);
-                                                    } else {
-                                                        setActiveMobileTool('adjust');
-                                                        setMobileAdjustMode(selectedImage ? 'individual' : 'global');
-                                                    }
-                                                }}
-                                                className={`p-3 rounded-full transition-all ${activeMobileTool === 'adjust' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover
-:bg-zinc-100 font-medium'}`}
-                                            >
-                                                <Scaling className="w-5 h-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setActiveMobileTool(activeMobileTool === 'layout' ? null : 'layout')}
-                                                className={`p-3 rounded-full transition-all ${activeMobileTool === 'layout' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-500 hover
-:bg-zinc-100 font-medium'}`}
-                                            >
-                                                <Settings className="w-5 h-5" />
-                                            </button>
+                                    <div className="flex items-center gap-3 bg-zinc-50 p-2 rounded-xl border border-zinc-100">
+                                        <img src={selectedImage.src} className="w-12 h-12 object-cover rounded-lg bg-white shadow-sm border border-zinc-200" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold truncate text-zinc-700">{selectedImage.name}</p>
+                                            <p className="text-[10px] text-zinc-500 font-medium font-mono">{(selectedImage.width * selectedImage.scale).toFixed(0)} x {(selectedImage.height * selectedImage.scale).toFixed(0)} mm</p>
                                         </div>
                                     </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <label className="text-xs font-medium text-zinc-500">Scale</label>
+                                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{(selectedImage.scale * 100).toFixed(0)}%</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="10"
+                                            max="200"
+                                            step="5"
+                                            value={selectedImage.scale * 100}
+                                            onChange={(e) => updateImageScale(selectedImage.id, Number(e.target.value) / 100)}
+                                            className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
+                                        />
+                                    </div>
+
+                                    <button
+                                        onClick={(e) => removeImage(selectedImage.id, e)}
+                                        className="w-full py-2 flex items-center justify-center gap-2 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 hover:border-rose-200 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" /> Remove Image
+                                    </button>
                                 </div>
                             )}
+
+                            {/* General Sizing */}
+                            <div className="space-y-4">
+                                <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                    <Scaling className="w-3 h-3" /> Global Sizing
+                                </h2>
+                                <div className="bg-zinc-50/50 p-4 rounded-xl border border-zinc-100 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-medium text-zinc-700">Uniform Size</label>
+                                        <button
+                                            onClick={() => setUseUniformSize(!useUniformSize)}
+                                            className={`w-10 h-6 rounded-full transition-colors relative ${useUniformSize ? 'bg-indigo-600' : 'bg-zinc-200'}`}
+                                        >
+                                            <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${useUniformSize ? 'translate-x-4' : ''}`} />
+                                        </button>
+                                    </div>
+
+                                    {useUniformSize ? (
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <label className="text-xs text-zinc-500">Max Length</label>
+                                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{targetSize} mm</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="20"
+                                                max="280"
+                                                value={targetSize}
+                                                onChange={(e) => setTargetSize(Number(e.target.value))}
+                                                className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <label className="text-xs text-zinc-500">Scale</label>
+                                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{globalScale}%</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="10"
+                                                max="200"
+                                                value={globalScale}
+                                                onChange={(e) => setGlobalScale(Number(e.target.value))}
+                                                className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Layout Settings */}
+                            <div className="space-y-4">
+                                <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                    <Settings className="w-3 h-3" /> Paper & Layout
+                                </h2>
+
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-xs font-medium text-zinc-600 mb-1.5 block">Paper Size</label>
+                                        <div className="relative">
+                                            <select
+                                                value={paperSize}
+                                                onChange={(e) => setPaperSize(e.target.value as keyof typeof PAPER_SIZES)}
+                                                className="w-full text-sm border-zinc-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 pl-3 pr-8 bg-white appearance-none cursor-pointer"
+                                            >
+                                                {Object.entries(PAPER_SIZES).map(([key, config]) => (
+                                                    <option key={key} value={key}>{config.label}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                                                <List className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-medium text-zinc-600 mb-1.5 block">Margin (mm)</label>
+                                            <input
+                                                type="number"
+                                                value={margin}
+                                                onChange={(e) => setMargin(Number(e.target.value))}
+                                                className="w-full text-sm border-zinc-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 px-3"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-medium text-zinc-600 mb-1.5 block">Gap (mm)</label>
+                                            <input
+                                                type="number"
+                                                value={gap}
+                                                onChange={(e) => setGap(Number(e.target.value))}
+                                                className="w-full text-sm border-zinc-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 px-3"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-3 bg-zinc-50/50 rounded-xl border border-zinc-100">
+                                        <div className="flex items-center gap-2">
+                                            <RotateCw className="w-4 h-4 text-zinc-400" />
+                                            <span className="text-xs font-medium text-zinc-600">Auto Rotate</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setAllowRotation(!allowRotation)}
+                                            className={`w-10 h-6 rounded-full transition-colors relative ${allowRotation ? 'bg-indigo-600' : 'bg-zinc-200'}`}
+                                        >
+                                            <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${allowRotation ? 'translate-x-4' : ''}`} />
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <span className="text-xs font-medium text-zinc-600 block">Packing Logic</span>
+                                        <div className="flex p-1 bg-zinc-100/80 rounded-lg">
+                                            <button
+                                                onClick={() => setSortStrategy('smart')}
+                                                className={`flex-1 py-1.5 text-[10px] font-semibold rounded-md transition-all ${sortStrategy === 'smart' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                                            >
+                                                Smart Check
+                                            </button>
+                                            <button
+                                                onClick={() => setSortStrategy('manual')}
+                                                className={`flex-1 py-1.5 text-[10px] font-semibold rounded-md transition-all ${sortStrategy === 'manual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                                            >
+                                                Manual
+                                            </button>
+                                        </div>
+                                        {sortStrategy === 'manual' && (
+                                            <p className="text-[10px] text-amber-600 flex items-center gap-1.5 bg-amber-50/50 p-2 rounded-lg border border-amber-100/50">
+                                                <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                                                Drag images in "Images" tab to order.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </>
                     )}
 
@@ -903,12 +720,10 @@ nsparent pointer-events-none">
                                             }}
                                             className={`
                           group flex items-center gap-3 p-3 rounded-xl border cursor-grab active:cursor-grabbing transition-all duration-200 relative
-                          ${selectedImageId === img.id ? 'border-indigo-500 bg-indigo-50/50 shadow-md ring-1 ring-indigo-500 z-10' : 'border-zinc-200 bg-white hover:border-indigo-300 ho
-ver:shadow-sm'}
+                          ${selectedImageId === img.id ? 'border-indigo-500 bg-indigo-50/50 shadow-md ring-1 ring-indigo-500 z-10' : 'border-zinc-200 bg-white hover:border-indigo-300 hover:shadow-sm'}
                         `}
                                         >
-                                            <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:text-indigo-500 transition-colors
-">
+                                            <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:text-indigo-500 transition-colors">
                                                 <span className="text-xs font-bold">{index + 1}</span>
                                             </div>
 
@@ -921,14 +736,13 @@ ver:shadow-sm'}
 
                                             <button
                                                 onClick={(e) => removeImage(img.id, e)}
-                                                className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-
-0 group-hover:opacity-100"
+                                                className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
                                                 title="Remove"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
 
-                                            <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab text-zinc-300">   
+                                            <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab text-zinc-300">
                                                 <GripVertical className="w-4 h-4" />
                                             </div>
                                         </div>
@@ -944,9 +758,7 @@ ver:shadow-sm'}
                     <button
                         onClick={handlePrint}
                         disabled={images.length === 0}
-                        className="group w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 disabled:from-zinc-300 disabled:to-zin
-c-300 disabled:cursor-not-allowed text-white rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300 font-semibold flex items-center justify-center gap-2 transiti
-on-all duration-200 active:scale-[0.98]"
+                        className="group w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 disabled:from-zinc-300 disabled:to-zinc-300 disabled:cursor-not-allowed text-white rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300 font-semibold flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98]"
                     >
                         <Printer className="w-5 h-5 group-hover:animate-pulse" />
                         <span>Print Layout</span>
@@ -961,8 +773,7 @@ on-all duration-200 active:scale-[0.98]"
                 className="flex-1 overflow-auto bg-zinc-100/50 p-4 md:p-12 pb-32 md:pb-12 flex flex-col items-center relative"
             >
                 {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '24px 24p
-x' }}></div>
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
                 {images.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-400 space-y-6 animate-in fade-in zoom-in duration-500">
@@ -988,88 +799,105 @@ x' }}></div>
                                 </div>
 
                                 {/* Responsive Scaling Container */}
-                                <div
-                                    className="relative transition-transform duration-300 origin-top"
-                                    style={{
-                                        // We set explicit pixel size for the wrapper so it takes up accurate flow space. 1mm approx 3.78px
-                                        width: `${activePaper.width * 3.78 * previewScale}px`,
-                                        height: `${activePaper.height * 3.78 * previewScale}px`
-                                    }}
-                                >
-                                    {/* The Paper Sheet (Scaled) */}
+                                {/* We use a container that scales down its children based on viewport width using CSS container queries or calc */}
+                                <div className="w-full flex justify-center overflow-hidden">
                                     <div
-                                        className="absolute top-0 left-0 bg-white shadow-2xl shadow-zinc-300/50 overflow-hidden print-sheet sheet ring-1 ring-zinc-900/5 transition-trans
-form duration-300 origin-top-left"
+                                        className="origin-top transition-transform duration-300"
                                         style={{
-                                            width: `${activePaper.width}mm`,
-                                            height: `${activePaper.height}mm`,
-                                            transform: `scale(${previewScale})`
+                                            // Simple responsive scaling for mobile: 
+                                            // A4 width is ~794px (210mm). 
+                                            // Mobile screen is ~360-400px.
+                                            // We scale based on viewport width (vw).
+                                            zoom: 'var(--scale-zoom, 1)',
+                                            transform: 'scale(var(--scale-transform, 1))'
                                         }}
                                     >
-                                        {/* Visual Guide for Margins (Screen Only) */}
-                                        <div
-                                            className="absolute border border-dashed border-zinc-200 pointer-events-none no-print"
-                                            style={{
-                                                left: `${margin}mm`,
-                                                top: `${margin}mm`,
-                                                right: `${margin}mm`,
-                                                bottom: `${margin}mm`,
-                                                zIndex: 10
-                                            }}
-                                        />
+                                        <style>{`
+                                            @media (max-width: 850px) {
+                                                .page-wrapper {
+                                                    --scale-zoom: calc((100vw - 48px) / 800);
+                                                    --scale-transform: 1; /* zoom handles layout better than transform for document flow usually, but we can fallback */
+                                                }
+                                                /* Firefox doesn't support zoom well, fallback */
+                                                @supports not (zoom: 1) {
+                                                    .page-wrapper > div > div {
+                                                        transform: scale(calc((100vw - 48px) / 800));
+                                                        margin-bottom: -50%; /* Compensate for transform space */
+                                                    }
+                                                }
+                                            }
+                                        `}</style>
 
-                                        {/* Images */}
-                                        {pageImages.map((img, imgIdx) => (
+                                        {/* The Paper Sheet */}
+                                        <div
+                                            className="bg-white shadow-2xl shadow-zinc-300/50 relative overflow-hidden transition-all duration-500 print-sheet sheet ring-1 ring-zinc-900/5"
+                                            style={{
+                                                width: `${currentPaper.width}mm`,
+                                                height: `${currentPaper.height}mm`,
+                                            }}
+                                        >
+                                            {/* Visual Guide for Margins (Screen Only) */}
                                             <div
-                                                key={`${img.id}-${imgIdx}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedImageId(img.id);
-                                                    setActiveTab('settings');
-                                                    setShowMobilePanel(true);
-                                                    setActiveMobileTool('adjust');
-                                                    setMobileAdjustMode('individual');
+                                                className="absolute border border-dashed border-zinc-200 pointer-events-none no-print"
+                                                style={{
+                                                    left: `${margin}mm`,
+                                                    top: `${margin}mm`,
+                                                    right: `${margin}mm`,
+                                                    bottom: `${margin}mm`,
+                                                    zIndex: 10
                                                 }}
-                                                className={`
+                                            />
+
+                                            {/* Images */}
+                                            {pageImages.map((img, imgIdx) => (
+                                                <div
+                                                    key={`${img.id}-${imgIdx}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedImageId(img.id);
+                                                        setActiveTab('settings');
+                                                    }}
+                                                    className={`
                         absolute overflow-hidden group/img transition-all duration-200 cursor-pointer hover:shadow-lg
                         ${selectedImageId === img.id ? 'z-30 ring-4 ring-indigo-500/50 shadow-2xl scale-[1.01]' : 'hover:z-20 hover:ring-2 hover:ring-indigo-200 hover:-translate-y-0.5'}
                       `}
-                                                style={{
-                                                    left: `${img.x + margin}mm`,
-                                                    top: `${img.y + margin}mm`,
-                                                    width: `${img.renderWidth}mm`,
-                                                    height: `${img.renderHeight}mm`,
-                                                }}
-                                                title={`${Math.round(img.width)}x${Math.round(img.height)}mm`}
-                                            >
-                                                {/* Selection Overlay (Active) */}
-                                                {selectedImageId === img.id && (
-                                                    <div className="absolute inset-0 bg-indigo-600/10 pointer-events-none z-10 no-print mix-blend-multiply" />
-                                                )}
+                                                    style={{
+                                                        left: `${img.x + margin}mm`,
+                                                        top: `${img.y + margin}mm`,
+                                                        width: `${img.renderWidth}mm`,
+                                                        height: `${img.renderHeight}mm`,
+                                                    }}
+                                                    title={`${Math.round(img.width)}x${Math.round(img.height)}mm`}
+                                                >
+                                                    {/* Selection Overlay (Active) */}
+                                                    {selectedImageId === img.id && (
+                                                        <div className="absolute inset-0 bg-indigo-600/10 pointer-events-none z-10 no-print mix-blend-multiply" />
+                                                    )}
 
-                                                {img.rotated ? (
-                                                    <img
-                                                        src={img.src}
-                                                        alt=""
-                                                        className="absolute w-full h-full object-cover"
-                                                        style={{
-                                                            width: `${img.width}mm`,
-                                                            height: `${img.height}mm`,
-                                                            left: '50%',
-                                                            top: '50%',
-                                                            transform: 'translate(-50%, -50%) rotate(90deg)',
-                                                            maxWidth: 'none',
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <img
-                                                        src={img.src}
-                                                        alt=""
-                                                        className="w-full h-full object-cover block"
-                                                    />
-                                                )}
-                                            </div>
-                                        ))}
+                                                    {img.rotated ? (
+                                                        <img
+                                                            src={img.src}
+                                                            alt=""
+                                                            className="absolute w-full h-full object-cover"
+                                                            style={{
+                                                                width: `${img.width}mm`,
+                                                                height: `${img.height}mm`,
+                                                                left: '50%',
+                                                                top: '50%',
+                                                                transform: 'translate(-50%, -50%) rotate(90deg)',
+                                                                maxWidth: 'none',
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src={img.src}
+                                                            alt=""
+                                                            className="w-full h-full object-cover block"
+                                                        />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1079,12 +907,10 @@ form duration-300 origin-top-left"
             </main>
 
             {/* --- MOBILE NAVIGATION --- */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 z-50 flex justify-around items-end p-3 pb-safe no-print safe-area-bottom shadow-[0_
--4px_20px_-5px_rgba(0,0,0,0.1)]">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 z-50 flex justify-around items-end p-3 pb-safe no-print safe-area-bottom shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
                 <button
                     onClick={() => toggleMobileTab('settings')}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 flex-1 ${activeTab === 'settings' && showMobilePanel ? 'text-indigo-600 bg-in
-digo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 flex-1 ${activeTab === 'settings' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
                 >
                     <Settings className={`w-6 h-6 transition-transform duration-300 ${activeTab === 'settings' && showMobilePanel ? 'fill-indigo-100 scale-110' : ''}`} />
                     <span className="text-[10px] font-medium">Settings</span>
@@ -1094,8 +920,7 @@ digo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
                     <button
                         onClick={handlePrint}
                         disabled={images.length === 0}
-                        className="flex flex-col items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-300 active:scale-95 transition-all d
-isabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-500 ring-4 ring-white"
+                        className="flex flex-col items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-300 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-500 ring-4 ring-white"
                     >
                         <Printer className="w-6 h-6" />
                     </button>
@@ -1104,14 +929,12 @@ isabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-500 ring-4 ring-w
 
                 <button
                     onClick={() => toggleMobileTab('sequence')}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 flex-1 ${activeTab === 'sequence' && showMobilePanel ? 'text-indigo-600 bg-in
-digo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 flex-1 ${activeTab === 'sequence' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
                 >
                     <div className="relative">
                         <List className={`w-6 h-6 transition-transform duration-300 ${activeTab === 'sequence' && showMobilePanel ? 'fill-indigo-100 scale-110' : ''}`} />
                         {images.length > 0 && (
-                            <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center border-2 border-whi
-te">
+                            <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center border-2 border-white">
                                 {images.length}
                             </span>
                         )}
@@ -1150,7 +973,7 @@ te">
             position: static !important;
             width: 100% !important;
           }
-
+          
           /* Page Breaks */
           .page-wrapper {
             break-after: page;
@@ -1165,7 +988,7 @@ te">
           .print-sheet {
             box-shadow: none !important;
             margin: 0 !important;
-            border: none !-important;
+            border: none !important;
             overflow: hidden !important;
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
