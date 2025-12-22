@@ -394,7 +394,7 @@ export default function PrintNest() {
                         <div className="bg-indigo-600 rounded-lg p-1.5 shadow-lg shadow-indigo-200">
                             <Layout className="w-5 h-5 text-white" />
                         </div>
-                        <h1 className="text-xl font-bold text-zinc-800 tracking-tight">PrintIt</h1>
+                        <h1 className="text-xl font-bold text-zinc-800 tracking-tight">EzzPrint</h1>
                     </div>
 
                     {/* Segmented Control Tabs */}

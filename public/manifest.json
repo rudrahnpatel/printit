@@ -1,6 +1,6 @@
 {
-    "name": "PrintIt",
-    "short_name": "PrintIt",
+    "name": "EzzPrint",
+    "short_name": "EzzPrint",
     "description": "Smart Print Management Solution",
     "start_url": "/",
     "display": "standalone",
