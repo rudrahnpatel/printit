@@ -184,12 +184,23 @@ export default function PrintNest() {
     // Selection & UI State
     const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'settings' | 'sequence'>('settings');
+    const [showMobilePanel, setShowMobilePanel] = useState(false);
     const [isDraggingFile, setIsDraggingFile] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
     // Drag and Drop Reordering State
     const dragItem = useRef<number | null>(null);
     const dragOverItem = useRef<number | null>(null);
+
+    // --- MOBILE HELPERS ---
+    const toggleMobileTab = (tab: 'settings' | 'sequence') => {
+        if (activeTab === tab) {
+            setShowMobilePanel(!showMobilePanel);
+        } else {
+            setActiveTab(tab);
+            setShowMobilePanel(true);
+        }
+    };
 
     // --- HANDLERS ---
 
@@ -388,7 +399,8 @@ export default function PrintNest() {
         <div className="flex h-screen bg-zinc-50 text-zinc-900 font-sans overflow-hidden app-container selection:bg-indigo-100 selection:text-indigo-900">
 
             {/* --- SIDEBAR --- */}
-            <aside className="w-96 bg-white flex flex-col z-20 shadow-xl border-r border-zinc-100 no-print">
+            {/* --- SIDEBAR --- */}
+            <aside className={`${showMobilePanel ? 'flex fixed bottom-[88px] left-2 right-2 top-auto h-[60vh] rounded-2xl border border-zinc-200/50 ring-1 ring-zinc-900/5' : 'hidden'} md:flex md:static md:w-96 md:h-auto md:inset-auto md:rounded-none md:border-r md:border-zinc-100 md:ring-0 bg-white flex-col z-40 shadow-2xl md:shadow-xl no-print transition-all duration-300 ease-in-out origin-bottom`}>
                 <div className="p-6 pb-2 bg-white z-10">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="bg-indigo-600 rounded-lg p-1.5 shadow-lg shadow-indigo-200">
@@ -398,7 +410,7 @@ export default function PrintNest() {
                     </div>
 
                     {/* Segmented Control Tabs */}
-                    <div className="flex p-1 bg-zinc-100/80 rounded-xl mb-2 relative">
+                    <div className="hidden md:flex p-1 bg-zinc-100/80 rounded-xl mb-2 relative">
                         <button
                             onClick={() => setActiveTab('settings')}
                             className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${activeTab === 'settings' ? 'bg-white text-indigo-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
@@ -720,7 +732,10 @@ export default function PrintNest() {
             </aside>
 
             {/* --- MAIN PREVIEW AREA --- */}
-            <main className="flex-1 overflow-auto bg-zinc-100/50 p-12 flex flex-col items-center relative">
+            <main
+                onClick={() => setShowMobilePanel(false)}
+                className="flex-1 overflow-auto bg-zinc-100/50 p-4 md:p-12 pb-32 md:pb-12 flex flex-col items-center relative"
+            >
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
@@ -819,6 +834,43 @@ export default function PrintNest() {
                     </div>
                 )}
             </main>
+
+            {/* --- MOBILE NAVIGATION --- */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 z-50 flex justify-around items-end p-3 pb-safe no-print safe-area-bottom shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
+                <button
+                    onClick={() => toggleMobileTab('settings')}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 flex-1 ${activeTab === 'settings' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                >
+                    <Settings className={`w-6 h-6 transition-transform duration-300 ${activeTab === 'settings' && showMobilePanel ? 'fill-indigo-100 scale-110' : ''}`} />
+                    <span className="text-[10px] font-medium">Settings</span>
+                </button>
+
+                <div className="relative -top-6">
+                    <button
+                        onClick={handlePrint}
+                        disabled={images.length === 0}
+                        className="flex flex-col items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-300 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-500 ring-4 ring-white"
+                    >
+                        <Printer className="w-6 h-6" />
+                    </button>
+                    <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium text-zinc-500 whitespace-nowrap">Print</span>
+                </div>
+
+                <button
+                    onClick={() => toggleMobileTab('sequence')}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 flex-1 ${activeTab === 'sequence' && showMobilePanel ? 'text-indigo-600 bg-indigo-50/50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                >
+                    <div className="relative">
+                        <List className={`w-6 h-6 transition-transform duration-300 ${activeTab === 'sequence' && showMobilePanel ? 'fill-indigo-100 scale-110' : ''}`} />
+                        {images.length > 0 && (
+                            <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center border-2 border-white">
+                                {images.length}
+                            </span>
+                        )}
+                    </div>
+                    <span className="text-[10px] font-medium">Images</span>
+                </button>
+            </nav>
 
             {/* --- PRINT STYLES --- */}
             <style>{`
