@@ -1,0 +1,16 @@
+{
+    "name": "PrintIt",
+    "short_name": "PrintIt",
+    "description": "Smart Print Management Solution",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4F46E5",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml"
+        }
+    ]
+}
