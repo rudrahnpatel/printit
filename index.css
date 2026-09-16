@@ -3,9 +3,63 @@
 @tailwind utilities;
 
 @layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
     body {
         font-family: 'Outfit', sans-serif;
-        @apply bg-zinc-50 text-zinc-900;
+        @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+        -webkit-font-smoothing: antialiased;
+        -webkit-tap-highlight-color: transparent;
+        /* The app manages its own scrolling, so stop the page itself from
+           rubber-banding on touch devices. */
+        overscroll-behavior-y: none;
+    }
+
+    /* `dvh` keeps the layout correct while mobile browser chrome hides/shows.
+       The `vh` line is the fallback for browsers without `dvh`. */
+    .app-container {
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    /* The stepper supplies its own +/- controls. */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+
+    /* Comfortable thumb size for the range inputs on touch screens. */
+    input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+        @apply h-2 rounded-full bg-zinc-200 dark:bg-zinc-700;
+    }
+
+    input[type="range"]::-moz-range-track {
+        @apply h-2 rounded-full bg-zinc-200 dark:bg-zinc-700;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        margin-top: -6px;
+        @apply w-5 h-5 rounded-full bg-indigo-600 border-2 border-white dark:border-zinc-900 shadow-md cursor-pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        @apply w-5 h-5 rounded-full bg-indigo-600 border-2 border-white dark:border-zinc-900 shadow-md cursor-pointer;
+        border-width: 2px;
     }
 }
 
@@ -20,5 +74,15 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    @apply bg-zinc-300 rounded-full hover:bg-zinc-400;
+    @apply bg-zinc-300 dark:bg-zinc-700 rounded-full hover:bg-zinc-400 dark:hover:bg-zinc-600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }
